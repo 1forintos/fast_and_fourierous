@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <valarray>
 
 #include "lodepng.h"
 
@@ -54,82 +53,8 @@ void ComplexToReal(std::vector<std::complex<double>>&in, std::vector<unsigned ch
 		out.push_back(length);
 	}
 }
-/*
-void fft(std::vector<std::complex<double>>& x)
-{
-    const size_t N = x.size();
-    if (N <= 1) return;
- 
-    // divide
-    std::vector<std::complex<double>> even = x[std::slice(0, N/2, 2)];
-    std::vector<std::complex<double>>  odd = x[std::slice(1, N/2, 2)];
- 
-    // conquer
-    fft(even);
-    fft(odd);
- 
-    // combine
-    for (size_t k = 0; k < N/2; ++k)
-    {
-        std::copmlex<double> t = std::polar(1.0, -2 * M_PI * k / N) * odd[k];
-        x[k    ] = even[k] + t;
-        x[k+N/2] = even[k] - t;  
-    }
-}
-*/
+
 void DFT(std::vector<std::complex<double>>& in, std::vector<std::complex<double>>& out, unsigned w, unsigned h, bool horizontal, bool inverse)
-{
-	out.clear();
-	out.resize(in.size());
-
-	//std::vector<std::complex<double>> out2;
-	for (unsigned i = 0; i < h; ++i)
-	{
-		/*std::vector<std::complex<double>>::const_iterator first = in.begin() + h * i;
-		std::vector<std::complex<double>>::const_iterator last = in.begin() + h * i + w;
-		std::vector<std::complex<double>> row(first, last);
-		fft(row);
-		out2.push_back(row);
-		*/
-		for (unsigned k = 0; k < w; ++k)
-		{
-			std::complex<double> sumEven(0.0, 0.0);
-			std::complex<double> sumOdd(0.0, 0.0);
-			// code to formula:
-			// w -> N, j -> m, k -> k
-			for (unsigned j = 0; j < w / 2; ++j)
-			{				
-				size_t addr = horizontal ? (2 * j) + i * w : i + (2 * j) * w;
-				size_t addr2 = horizontal ? (2 * j + 1) + i * w : i + (2 * j + 1) * w;
-				auto angle = (inverse ? -2.0f : 2.0) * M_PI * j * k / (w / 2.0);
-				sumEven.real(sumEven.real() + in[addr].real() * cos(angle) - in[addr].imag() * sin(angle));
-				sumEven.imag(sumEven.imag() + in[addr].real() * sin(angle) + in[addr].imag() * cos(angle));				
-
-				sumOdd.real(sumOdd.real() + in[addr2].real() * cos(angle) - in[addr2].imag() * sin(angle));
-				sumOdd.imag(sumOdd.imag() + in[addr2].real() * sin(angle) + in[addr2].imag() * cos(angle));				
-
-			}
-
-			auto angle = (inverse ? -2.0f : 2.0) * M_PI * k / w;
-			std::complex<double> twiddle(0.0, 0.0);
-			twiddle.real(cos(angle) - sin(angle));
-			twiddle.imag(sin(angle) + cos(angle));
-
-			if (!inverse)
-			{
-				sumEven *= 1.0 / w;
-				sumOdd *= 1.0 / w;
-				twiddle *= 1.0 / w;			
-			}
-
-			sumOdd = twiddle * sumOdd;
-			out[k + i * w] = sumEven + sumOdd;
-		}
-		std::cout << i << std::endl;
-	}
-}
-
-void DFT2(std::vector<std::complex<double>>& in, std::vector<std::complex<double>>& out, unsigned w, unsigned h, bool horizontal, bool inverse)
 {
 	out.clear();
 	out.resize(in.size());
@@ -158,6 +83,7 @@ void DFT2(std::vector<std::complex<double>>& in, std::vector<std::complex<double
 		std::cout << i << std::endl;
 	}
 }
+
 int main()
 {
 	std::string inName("lena.png");
@@ -177,8 +103,8 @@ int main()
 	ComplexToReal(f1, image);
 	savePNG(dftName, w, h, image);
 
-	DFT2(f1, f2, w, h, true, true);
-	DFT2(f2, f1, w, h, false, true);
+	DFT(f1, f2, w, h, true, true);
+	DFT(f2, f1, w, h, false, true);
 	std::cout << "IDFT finished" << std::endl;
 	ComplexToReal(f1, image);
 	savePNG(outName, w, h, image);
